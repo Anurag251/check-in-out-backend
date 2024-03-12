@@ -3,13 +3,17 @@ const cors = require("cors");
 const moment = require("moment-timezone");
 const mongoose = require("mongoose");
 const path = require("node:path");
-
+const jwt = require('jsonwebtoken');
+const bodyparser = require('body-parser')
 const XLSX = require("xlsx");
 const searchForUserInMainFile = require("./middleware/searchForUserInMainFile");
 const saveTheUserToUserCheckedFile = require("./middleware/saveTheUserToUserCheckedFile");
 const checkAndCreateFolder = require("./middleware/checkAndCreateFolder");
 const checkIfUserExistsInCheckedFile = require("./utils/checkIfUserExistsInCheckedFile");
 const Checkin = require("./models/checkin");
+const Users = require("./models/users");
+const authenticateToken = require("./middleware/authenticateToken");
+const { TOKEN_SECRET } = require("./utils/constants");
 
 const app = express();
 const port = 3000;
@@ -18,6 +22,7 @@ const dbURI = "mongodb://localhost:27017/checkinout";
 
 const timezone = "asia/kathmandu";
 const folderName = "checked_users";
+app.use(bodyparser.json());
 
 app.use(cors());
 
@@ -29,7 +34,20 @@ const registeredUsers = XLSX.utils.sheet_to_json(
   workbook.Sheets[sheet_name_list[0]]
 );
 
+app.post('/login',(req,res)=>{
+   Users.find({username,password}).then((doc)=>{
+    const payload = {username:doc.username,role:doc.role,email:doc.email,phone:doc.phone}
+    const token = jwt.sign(payload,TOKEN_SECRET,{expiresIn:'1d'})
+    return res.json({token})
+   }).catch((reson)=>{
+    return res.json({message:'Username or password doesn\'t match'}).status(404)
+   })
+})
+
+// you can adjust this middelware as your need
+app.use(authenticateToken)
 app.get("/:id", (req, res) => {
+  const role = req.userRole
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
@@ -281,7 +299,9 @@ app.put("/:id", (req, res) => {
   }
 });
 
-app.get("/favicon.ico", (req, res) => res.status(204));
+
+
+
 
 mongoose
   .connect(dbURI)
