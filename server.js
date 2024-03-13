@@ -19,14 +19,6 @@ const timezone = "Asia/Kathmandu";
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect(
-  // "mongodb+srv://Anurag251:aSOPrOrdf05ngvDb@checkinout.zllsfhq.mongodb.net/?retryWrites=true&w=majority&appName=Checkinout"
-  "mongodb://localhost:27017/checkinout",
-  {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  }
-);
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -338,6 +330,19 @@ app.post("/meal/:id/:meal", async (req, res) => {
 
 app.get("/favicon.ico", (req, res) => res.status(204));
 
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+mongoose.connect(
+  // "mongodb+srv://Anurag251:aSOPrOrdf05ngvDb@checkinout.zllsfhq.mongodb.net/?retryWrites=true&w=majority&appName=Checkinout"
+  "mongodb://localhost:27017/checkinout",
+  {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  }
+).then(()=>{
+  console.info('mongodb connected')
+  app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+  });
+}).catch(()=>{
+  console.error("Error in Connecting Mongodb")
 });
+
